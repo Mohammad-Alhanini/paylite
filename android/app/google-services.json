@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "190314205308",
+    "project_id": "pay-lite-fe324",
+    "storage_bucket": "pay-lite-fe324.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:190314205308:android:21bd7a9c9c6a785eb0b9f9",
+        "android_client_info": {
+          "package_name": "com.example.paylite"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDCVtMOJs1BcKWSDMSZvK3qrs6iI-yJLwk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
