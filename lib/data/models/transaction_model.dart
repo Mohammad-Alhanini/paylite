@@ -1,3 +1,4 @@
+// data/models/transaction_model.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class TransactionModel {
@@ -31,10 +32,10 @@ class TransactionModel {
     final data = doc.data() as Map<String, dynamic>;
     return TransactionModel(
       id: doc.id,
-      userId: (data['userId'] ?? '') as String,
-      recipientEmail: (data['recipientEmail'] ?? '') as String,
+      userId: data['userId'] ?? '',
+      recipientEmail: data['recipientEmail'] ?? '',
       amount: (data['amount'] ?? 0).toDouble(),
-      type: (data['type'] ?? 'sent') as String,
+      type: data['type'] ?? 'sent',
       createdAt: (data['createdAt'] as Timestamp).toDate(),
     );
   }

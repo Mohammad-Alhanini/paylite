@@ -50,19 +50,19 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyDCVtMOJs1BcKWSDMSZvK3qrs6iI-yJLwk',
-    appId: '1:190314205308:android:21bd7a9c9c6a785eb0b9f9',
-    messagingSenderId: '190314205308',
-    projectId: 'pay-lite-fe324',
-    storageBucket: 'pay-lite-fe324.firebasestorage.app',
+    apiKey: 'AIzaSyAchrIoKYyVav4VrmS89upLKRPceGDz0zU',
+    appId: '1:883159925204:android:5e120e9bacace6fbb9d641',
+    messagingSenderId: '883159925204',
+    projectId: 'pay-lite-app',
+    storageBucket: 'pay-lite-app.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyDvjtd3jVuI8aSQ2ACD0mtsIjDXbbZMSqQ',
-    appId: '1:190314205308:ios:844ebf416dabe07ab0b9f9',
-    messagingSenderId: '190314205308',
-    projectId: 'pay-lite-fe324',
-    storageBucket: 'pay-lite-fe324.firebasestorage.app',
-    iosBundleId: 'com.example.paylite',
+    apiKey: 'AIzaSyBniz0oB_dHZHUEH_Dx8UsG9Mk6Aa84Uzg',
+    appId: '1:883159925204:ios:ffb6d51160c6adc8b9d641',
+    messagingSenderId: '883159925204',
+    projectId: 'pay-lite-app',
+    storageBucket: 'pay-lite-app.firebasestorage.app',
+    iosBundleId: 'com.example.payliteapp',
   );
 }

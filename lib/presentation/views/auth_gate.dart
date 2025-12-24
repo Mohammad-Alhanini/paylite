@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:paylite/core/services/biometric_service.dart';
+import 'package:payliteapp/presentation/views/wallet_view.dart';
+import 'package:provider/provider.dart';
+import '../viewmodels/auth_viewmodel.dart';
 import 'login_view.dart';
-import 'dashboard_view.dart';
 
 class AuthGate extends StatefulWidget {
   const AuthGate({super.key});
@@ -11,29 +12,42 @@ class AuthGate extends StatefulWidget {
   State<AuthGate> createState() => _AuthGateState();
 }
 
-class _AuthGateState extends State<AuthGate> {
+class _AuthGateState extends State<AuthGate> with WidgetsBindingObserver {
   bool _loading = true;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) => _check());
   }
 
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
+      context.read<AuthViewModel>().markBackground();
+    }
+  }
+
   Future<void> _check() async {
+    final authVM = context.read<AuthViewModel>();
     final user = FirebaseAuth.instance.currentUser;
 
     if (user == null) {
-      if (!mounted) return;
       setState(() => _loading = false);
       return;
     }
 
-    final ok = await BiometricService().authenticate();
-
-    if (!mounted) return;
-
-    if (ok) {
+    final mustAuth = await authVM.shouldReAuth();
+    if (!mustAuth) {
+      if (!mounted) return;
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (_) => const DashboardView()),
@@ -41,7 +55,17 @@ class _AuthGateState extends State<AuthGate> {
       return;
     }
 
-    setState(() => _loading = false);
+    final ok = await authVM.biometricAuth();
+    if (!mounted) return;
+
+    if (ok) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const DashboardView()),
+      );
+    } else {
+      setState(() => _loading = false);
+    }
   }
 
   @override

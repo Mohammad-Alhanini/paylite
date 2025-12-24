@@ -1,51 +1,50 @@
 import 'package:local_auth/local_auth.dart';
 
 class BiometricService {
-  final LocalAuthentication _localAuth = LocalAuthentication();
+  final LocalAuthentication _auth = LocalAuthentication();
 
   Future<bool> isBiometricAvailable() async {
     try {
-      final canCheckBiometrics = await _localAuth.canCheckBiometrics;
-      final isDeviceSupported = await _localAuth.isDeviceSupported();
-      return canCheckBiometrics && isDeviceSupported;
-    } catch (e) {
-      print('Error checking biometric availability: $e');
+      final canCheck = await _auth.canCheckBiometrics;
+      final supported = await _auth.isDeviceSupported();
+      return canCheck && supported;
+    } catch (_) {
       return false;
     }
   }
 
   Future<List<BiometricType>> getAvailableBiometrics() async {
     try {
-      return await _localAuth.getAvailableBiometrics();
-    } catch (e) {
-      print('Error getting available biometrics: $e');
-      return [];
+      return await _auth.getAvailableBiometrics();
+    } catch (_) {
+      return <BiometricType>[];
     }
   }
 
-  Future<bool> authenticate() async {
+  Future<bool> authenticate({
+    String reason = 'Authenticate to access your PayLite wallet',
+    bool biometricOnly = false,
+    bool stickyAuth = true,
+    bool useErrorDialogs = true,
+  }) async {
     try {
-      final isAvailable = await isBiometricAvailable();
-      if (!isAvailable) return false;
+      if (!await isBiometricAvailable()) return false;
 
-      final authenticated = await _localAuth.authenticate(
-        localizedReason: 'Authenticate to access your PayLite wallet',
-        options: const AuthenticationOptions(
-          biometricOnly: false,
-          stickyAuth: true,
-          useErrorDialogs: true,
+      return await _auth.authenticate(
+        localizedReason: reason,
+        options: AuthenticationOptions(
+          biometricOnly: biometricOnly,
+          stickyAuth: stickyAuth,
+          useErrorDialogs: useErrorDialogs,
         ),
       );
-
-      return authenticated;
-    } catch (e) {
-      print('Biometric authentication error: $e');
+    } catch (_) {
       return false;
     }
   }
 
   Future<bool> authenticateWithPin(String pin) async {
-    await Future.delayed(const Duration(milliseconds: 500));
+    await Future.delayed(const Duration(milliseconds: 300));
     return true;
   }
 }

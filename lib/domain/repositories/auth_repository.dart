@@ -1,22 +1,14 @@
 import '../entities/user_entity.dart';
 
 abstract class AuthRepository {
-  Future<UserEntity> signInWithEmailAndPassword({
-    required String email,
-    required String password,
-  });
-
+  Future<UserEntity> signIn(String email, String password);
   Future<void> signOut();
+  Future<UserEntity?> currentUser();
 
-  Future<UserEntity?> getCurrentUser();
-
-  Future<bool> authenticateWithBiometrics();
-
-  Future<void> saveBiometricPreference(bool enabled);
-
+  Future<bool> authenticateBiometric();
+  Future<void> setBiometricEnabled(bool enabled);
   Future<bool> isBiometricEnabled();
 
-  Future<bool> shouldReAuthenticate() async {
-    return false;
-  }
+  Future<void> markBackground();
+  Future<bool> shouldReAuth();
 }

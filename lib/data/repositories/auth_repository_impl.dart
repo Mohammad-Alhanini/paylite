@@ -1,81 +1,56 @@
-import 'package:paylite/core/services/biometric_service.dart';
-import 'package:paylite/core/services/secure_storage_service.dart';
-import '../../domain/entities/user_entity.dart';
-import '../../domain/repositories/auth_repository.dart';
-import '../datasources/auth_remote_data_source.dart';
+import 'package:payliteapp/core/services/biometric_service.dart';
+import 'package:payliteapp/core/services/secure_storage_service.dart';
+import 'package:payliteapp/data/datasources/auth_remote_datasource.dart';
+import 'package:payliteapp/domain/entities/user_entity.dart';
+import 'package:payliteapp/domain/repositories/auth_repository.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
-  final AuthRemoteDataSource _remoteDataSource;
-  final SecureStorageService _secureStorage;
-  final BiometricService _biometricService;
+  final AuthRemoteDataSource _remote;
+  final SecureStorageService _storage;
+  final BiometricService _biometric;
 
-  AuthRepositoryImpl({
-    required AuthRemoteDataSource remoteDataSource,
-    required SecureStorageService secureStorage,
-    required BiometricService biometricService,
-  }) : _remoteDataSource = remoteDataSource,
-       _secureStorage = secureStorage,
-       _biometricService = biometricService;
+  AuthRepositoryImpl(this._remote, this._storage, this._biometric);
 
   @override
-  Future<UserEntity> signInWithEmailAndPassword({
-    required String email,
-    required String password,
-  }) async {
-    try {
-      final user = await _remoteDataSource.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
-
-      await _secureStorage.saveLastAuthTime();
-
-      return user;
-    } catch (e) {
-      rethrow;
-    }
+  Future<UserEntity> signIn(String email, String password) async {
+    final user = await _remote.signIn(email, password);
+    await _storage.saveLastAuthTime();
+    return user;
   }
 
   @override
   Future<void> signOut() async {
-    try {
-      await _remoteDataSource.signOut();
-      await _secureStorage.clearAll();
-    } catch (e) {
-      rethrow;
-    }
+    await _remote.signOut();
+    await _storage.clearAll();
   }
 
   @override
-  Future<UserEntity?> getCurrentUser() async {
-    try {
-      return await _remoteDataSource.getCurrentUser();
-    } catch (e) {
-      rethrow;
-    }
+  Future<UserEntity?> currentUser() async {
+    return await _remote.currentUser();
   }
 
   @override
-  Future<bool> authenticateWithBiometrics() async {
-    try {
-      return await _biometricService.authenticate();
-    } catch (e) {
-      throw Exception('Biometric authentication failed: $e');
-    }
+  Future<bool> authenticateBiometric() async {
+    return await _biometric.authenticate();
   }
 
   @override
-  Future<void> saveBiometricPreference(bool enabled) async {
-    await _secureStorage.setBiometricEnabled(enabled);
+  Future<void> setBiometricEnabled(bool enabled) async {
+    await _storage.setBiometricEnabled(enabled);
   }
 
   @override
   Future<bool> isBiometricEnabled() async {
-    return await _secureStorage.isBiometricEnabled();
+    return await _storage.isBiometricEnabled();
   }
 
   @override
-  Future<bool> shouldReAuthenticate() async {
-    return await _secureStorage.shouldReAuthenticate();
+  Future<void> markBackground() async {
+    await _storage.saveBackgroundTime();
+  }
+
+  @override
+  Future<bool> shouldReAuth() async {
+    return await _storage.shouldReAuthenticate(minutes: 2);
   }
 }

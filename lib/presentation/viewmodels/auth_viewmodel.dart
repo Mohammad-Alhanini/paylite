@@ -1,125 +1,68 @@
+// presentation/viewmodels/auth_viewmodel.dart
 import 'package:flutter/foundation.dart';
-import 'package:paylite/domain/entities/user_entity.dart';
-import 'package:paylite/domain/usecases/auth_usecase.dart';
+import 'package:payliteapp/domain/entities/user_entity.dart';
+import 'package:payliteapp/domain/repositories/auth_repository.dart';
 
 class AuthViewModel extends ChangeNotifier {
-  final SignInUseCase _signInUseCase;
-  final SignOutUseCase _signOutUseCase;
-  final GetCurrentUserUseCase _getCurrentUserUseCase;
-  final AuthenticateWithBiometricsUseCase authenticateWithBiometricsUseCase;
-  final SaveBiometricPreferenceUseCase _saveBiometricPreferenceUseCase;
-  final IsBiometricEnabledUseCase _isBiometricEnabledUseCase;
+  final AuthRepository _repo;
 
-  AuthViewModel({
-    required SignInUseCase signInUseCase,
-    required SignOutUseCase signOutUseCase,
-    required GetCurrentUserUseCase getCurrentUserUseCase,
-    required this.authenticateWithBiometricsUseCase,
-    required SaveBiometricPreferenceUseCase saveBiometricPreferenceUseCase,
-    required IsBiometricEnabledUseCase isBiometricEnabledUseCase,
-    required ShouldReAuthenticateUseCase shouldReAuthenticateUseCase,
-  }) : _signInUseCase = signInUseCase,
-       _signOutUseCase = signOutUseCase,
-       _getCurrentUserUseCase = getCurrentUserUseCase,
-       _saveBiometricPreferenceUseCase = saveBiometricPreferenceUseCase,
-       _isBiometricEnabledUseCase = isBiometricEnabledUseCase;
+  AuthViewModel(this._repo);
 
-  UserEntity? _currentUser;
-  bool _isLoading = false;
-  String? _errorMessage;
-  bool _isAuthenticated = false;
-  bool _isBiometricEnabled = false;
+  UserEntity? _user;
+  bool _loading = false;
+  String? _error;
 
-  UserEntity? get currentUser => _currentUser;
-  bool get isLoading => _isLoading;
-  String? get errorMessage => _errorMessage;
-  bool get isAuthenticated => _isAuthenticated;
-  bool get isBiometricEnabled => _isBiometricEnabled;
+  UserEntity? get user => _user;
+  bool get isLoading => _loading;
+  String? get error => _error;
+  bool get isLoggedIn => _user != null;
 
-  void _setLoading(bool loading) {
-    _isLoading = loading;
-    notifyListeners();
-  }
-
-  void _setError(String? error) {
-    _errorMessage = error;
-    notifyListeners();
-  }
-
-  Future<void> signInWithEmailAndPassword({
-    required String email,
-    required String password,
-  }) async {
+  Future<void> login(String email, String password) async {
+    _setLoading(true);
+    _error = null;
     try {
-      _setLoading(true);
-      _setError(null);
-
-      final user = await _signInUseCase.execute(
-        email: email,
-        password: password,
-      );
-
-      _currentUser = user;
-      _isAuthenticated = true;
-      _isBiometricEnabled = await _isBiometricEnabledUseCase.execute();
-
-      _setLoading(false);
+      _user = await _repo.signIn(email.trim(), password.trim());
     } catch (e) {
-      _setLoading(false);
-      _setError(e.toString());
+      _error = e.toString();
       rethrow;
+    } finally {
+      _setLoading(false);
     }
   }
 
-  Future<void> signOut() async {
+  Future<void> logout() async {
+    _setLoading(true);
     try {
-      _setLoading(true);
-      await _signOutUseCase.execute();
-
-      _currentUser = null;
-      _isAuthenticated = false;
-      _isBiometricEnabled = false;
-
+      await _repo.signOut();
+      _user = null;
+    } finally {
       _setLoading(false);
-    } catch (e) {
-      _setLoading(false);
-      _setError(e.toString());
-      rethrow;
     }
   }
 
-  Future<void> checkCurrentUser() async {
+  Future<void> loadUserIfAny() async {
+    _setLoading(true);
     try {
-      _setLoading(true);
-
-      final user = await _getCurrentUserUseCase.execute();
-      if (user != null) {
-        _currentUser = user;
-        _isAuthenticated = true;
-        _isBiometricEnabled = await _isBiometricEnabledUseCase.execute();
-      }
-
+      _user = await _repo.currentUser();
+    } finally {
       _setLoading(false);
-    } catch (e) {
-      _setLoading(false);
-      _setError(e.toString());
     }
   }
 
-  Future<void> toggleBiometric(bool enabled) async {
-    try {
-      await _saveBiometricPreferenceUseCase.execute(enabled);
-      _isBiometricEnabled = enabled;
-      notifyListeners();
-    } catch (e) {
-      _setError(e.toString());
-    }
+  Future<bool> biometricAuth() async {
+    return await _repo.authenticateBiometric();
   }
 
-  void clearAuth() {
-    _currentUser = null;
-    _isAuthenticated = false;
-    _errorMessage = null;
+  Future<void> markBackground() async {
+    await _repo.markBackground();
+  }
+
+  Future<bool> shouldReAuth() async {
+    return await _repo.shouldReAuth();
+  }
+
+  void _setLoading(bool value) {
+    _loading = value;
     notifyListeners();
   }
 }

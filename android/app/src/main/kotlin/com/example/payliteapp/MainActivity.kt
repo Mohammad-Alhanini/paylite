@@ -1,4 +1,4 @@
-package com.example.paylite
+package com.example.payliteapp
 
 import io.flutter.embedding.android.FlutterFragmentActivity
 
