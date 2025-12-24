@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:payliteapp/presentation/views/wallet_view.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/auth_viewmodel.dart';
+import 'wallet_view.dart';
 import 'login_view.dart';
 
 class AuthGate extends StatefulWidget {
@@ -12,67 +12,43 @@ class AuthGate extends StatefulWidget {
   State<AuthGate> createState() => _AuthGateState();
 }
 
-class _AuthGateState extends State<AuthGate> with WidgetsBindingObserver {
-  bool _loading = true;
+class _AuthGateState extends State<AuthGate> {
+  bool _started = false;
 
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addObserver(this);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _check());
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_started) return;
+    _started = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) => _run());
   }
 
-  @override
-  void dispose() {
-    WidgetsBinding.instance.removeObserver(this);
-    super.dispose();
-  }
-
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    if (state == AppLifecycleState.paused ||
-        state == AppLifecycleState.inactive) {
-      context.read<AuthViewModel>().markBackground();
-    }
-  }
-
-  Future<void> _check() async {
-    final authVM = context.read<AuthViewModel>();
+  Future<void> _run() async {
     final user = FirebaseAuth.instance.currentUser;
 
     if (user == null) {
-      setState(() => _loading = false);
-      return;
-    }
-
-    final mustAuth = await authVM.shouldReAuth();
-    if (!mustAuth) {
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const DashboardView()),
+        MaterialPageRoute(builder: (_) => const LoginView()),
       );
       return;
     }
 
-    final ok = await authVM.biometricAuth();
+    final ok = await context.read<AuthViewModel>().biometricAuth();
+
     if (!mounted) return;
 
-    if (ok) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const DashboardView()),
-      );
-    } else {
-      setState(() => _loading = false);
-    }
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (_) => ok ? const DashboardView() : const LoginView(),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-    return const LoginView();
+    return const Scaffold(body: SizedBox.shrink());
   }
 }

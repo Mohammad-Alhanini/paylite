@@ -15,10 +15,10 @@ class LoadingOverlay extends StatelessWidget {
         child,
         if (isLoading)
           Container(
-            color: Colors.blue,
+            color: Colors.white,
             child: const Center(
               child: CircularProgressIndicator(
-                valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
               ),
             ),
           ),

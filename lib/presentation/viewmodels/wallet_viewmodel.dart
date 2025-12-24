@@ -1,5 +1,5 @@
-// presentation/viewmodels/wallet_viewmodel.dart
 import 'package:flutter/foundation.dart';
+
 import 'package:payliteapp/data/models/transaction_model.dart';
 import 'package:payliteapp/domain/repositories/wallet_repository.dart';
 
@@ -14,6 +14,8 @@ class WalletViewModel extends ChangeNotifier {
   bool _showBalance = false;
   List<TransactionModel> _recent = [];
 
+  bool _firstLoadDone = false;
+
   double get balance => _balance;
   bool get isLoading => _loading;
   String? get error => _error;
@@ -24,12 +26,19 @@ class WalletViewModel extends ChangeNotifier {
       _showBalance ? '${_balance.toStringAsFixed(3)} JOD' : '******';
 
   Future<void> init() async {
-    await refresh();
+    await refresh(silent: true);
   }
 
-  Future<void> refresh() async {
-    _setLoading(true);
+  Future<void> refresh({bool silent = false}) async {
+    final shouldShowLoading = !silent && _firstLoadDone;
+
+    if (shouldShowLoading) {
+      _loading = true;
+      notifyListeners();
+    }
+
     _error = null;
+
     try {
       _balance = await _repo.getBalance();
       _recent = await _repo.getLastTransactions(limit: 5);
@@ -37,7 +46,13 @@ class WalletViewModel extends ChangeNotifier {
       _error = e.toString();
       _recent = [];
     } finally {
-      _setLoading(false);
+      _firstLoadDone = true;
+      if (shouldShowLoading) {
+        _loading = false;
+        notifyListeners();
+      } else {
+        notifyListeners();
+      }
     }
   }
 
@@ -50,22 +65,20 @@ class WalletViewModel extends ChangeNotifier {
     required String recipientEmail,
     required double amount,
   }) async {
-    _setLoading(true);
+    _loading = true;
     _error = null;
+    notifyListeners();
+
     try {
       await _repo.sendMoney(recipientEmail: recipientEmail, amount: amount);
-      await refresh();
+      await refresh(silent: true);
       return true;
     } catch (e) {
       _error = e.toString();
       return false;
     } finally {
-      _setLoading(false);
+      _loading = false;
+      notifyListeners();
     }
-  }
-
-  void _setLoading(bool value) {
-    _loading = value;
-    notifyListeners();
   }
 }
